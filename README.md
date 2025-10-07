@@ -58,7 +58,7 @@
 
 <img width="1919" height="1199" alt="Screenshot 2025-10-07 200124" src="https://github.com/user-attachments/assets/f64c7654-21e9-49b5-97a4-97b54ecb66e2" />
 
-## Test
+## Result
 
 ### Using the gateway’s public IP 
 
