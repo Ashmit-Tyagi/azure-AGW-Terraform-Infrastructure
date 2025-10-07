@@ -3,8 +3,7 @@ pipeline {
 
     environment {
         AZURE_CREDENTIALS = credentials('AZURE_CREDENTIALS') 
-        
-
+    
         TF_VAR_admin_password = credentials('TF_VAR_admin_password')
     }
 
