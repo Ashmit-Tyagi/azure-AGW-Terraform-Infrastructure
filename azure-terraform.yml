@@ -1,0 +1,123 @@
+trigger:
+- main
+parameters:
+- name: Environment
+  displayName: Target Environment
+  type: string
+  default: dev
+  values:
+  - dev
+  - prod
+- name: action
+  displayName: Terraform Action
+  type: string
+  default: apply
+  values:
+  - plan
+  - apply
+  - destroy
+
+variables:
+  - name: adminPassword
+    value: $(TF_VAR_admin_password) 
+  
+  - name: vmImage
+    value: 'windows-latest'
+  - name: TerraformDirectory
+    value: 'environments/${{ parameters.Environment }}'
+
+pool:
+  vmImage: $(vmImage) 
+
+stages:
+- stage: PrepareAndPlan
+  displayName: 'Prepare & Plan Terraform - ${{ parameters.Environment }}'
+  jobs:
+  - job: Plan
+    displayName: 'Terraform Plan Job'
+    steps:
+    - task: TerraformInstaller@1
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: 'latest'
+
+    - task: AzureCLI@2
+      displayName: 'Azure Login (Implicit)'
+      inputs:
+        azureSubscription: 'azure-work' 
+        scriptType: 'bash' 
+        scriptLocation: 'inlineScript'
+        inlineScript: 'echo "Azure credentials sourced successfully."'
+
+
+    - task: CmdLine@2
+      displayName: 'Terraform Init'
+      inputs:
+        script: 'terraform init -upgrade'
+        workingDirectory: $(TerraformDirectory)
+
+
+    - task: CmdLine@2
+      displayName: 'Terraform Validate'
+      inputs:
+        script: 'terraform validate'
+        workingDirectory: $(TerraformDirectory)
+
+    - task: CmdLine@2
+      displayName: 'Terraform Plan'
+      inputs:
+        script: 'terraform plan -var="admin_password=$(adminPassword)" -out=tfplan'
+        workingDirectory: $(TerraformDirectory)
+
+- stage: DeploymentApproval
+  displayName: 'Manual Review'
+  dependsOn: PrepareAndPlan 
+  condition: succeeded()
+  
+  jobs:
+  - deployment: Review
+    displayName: 'Deployment Approval'
+    environment: 'ProdEnvironment' 
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - task: CmdLine@2
+              displayName: 'Awaiting Approval'
+              inputs:
+                script: 'echo Plan complete. Awaiting manual approval to apply changes to ${{ parameters.Environment }}.'
+
+- stage: ApplyDeployment
+  displayName: 'Apply Terraform Changes'
+  dependsOn: DeploymentApproval
+  condition: and(succeeded(), eq('${{ parameters.action }}', 'apply'))
+
+  jobs:
+  - job: Apply
+    displayName: 'Terraform Apply Job'
+    pool:
+      vmImage: $(vmImage) 
+
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Azure Re-Login (For Apply Stage)'
+      inputs:
+        azureSubscription: 'azure-work'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: 'echo "Azure re-authenticated."'
+
+    - task: CmdLine@2
+      displayName: 'Terraform Apply'
+      inputs:
+        script: 'terraform apply -auto-approve tfplan'
+        workingDirectory: $(TerraformDirectory)
+
+    - task: CmdLine@2
+      displayName: 'Output Deployment Details'
+      inputs:
+        script: |
+          @echo off
+          terraform output -json > output.json
+          type output.json
+        workingDirectory: $(TerraformDirectory)
