@@ -17,7 +17,7 @@
 
     - Git: To clone the repository.
 
-Also be authenticated to your Azure account. Open your terminal and run az login to perform an interactive login and set your default subscription.
+### Also be authenticated to your Azure account. Open your terminal and run az login to perform an interactive login and set your default subscription.
 
 
 ## CI/CD Automation with Jenkins
