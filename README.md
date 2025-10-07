@@ -5,4 +5,6 @@
 
 # Repository Structure
 
+### The project uses a standard and scalable repository structure to support different environments (dev, prod) and reusable infrastructure modules.
+
 <img width="441" height="349" alt="Screenshot 2025-10-07 165409" src="https://github.com/user-attachments/assets/c8ac58fe-84df-4d53-bd02-3b24858af531" />
