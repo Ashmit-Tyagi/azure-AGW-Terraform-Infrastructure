@@ -34,17 +34,6 @@ pipeline {
             }
         }
 
-        stage('Debug Repository Root') {
-            steps {
-                bat 'echo "--- Listing contents of the Jenkins Workspace Root: ---"'
-                bat 'dir'
-                
-                bat 'echo "--- Listing contents of environments/ directory: ---"'
-                bat 'dir environments'
-                bat 'echo "-----------------------------------------------------------------------------------"'
-            }
-        }
-
         stage('Terraform Init and Plan') {
             steps {
                 dir('environments/dev') {
