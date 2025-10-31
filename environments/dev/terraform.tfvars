@@ -1,7 +1,7 @@
 subscription_id = "339e97cf-8522-4368-89b9-ca740955b522"
 environment     = "dev"
 location        = "East US"
-resource_group_name = "rg-dev-app-01"
+resource_group_name = "rg-dev-app"
 
 public_subnet_address_prefixes = [
   "10.0.1.0/24"
@@ -11,7 +11,7 @@ private_subnet_address_prefixes = [
 ]
 
 vm_size         = "Standard_B2s"
-admin_password  = "TfSecureP@ssw0rd!"
+admin_password  = "Password2025!"
 vm_count        = 2
 
 ssl_certificate_name = "pfx-cert"
