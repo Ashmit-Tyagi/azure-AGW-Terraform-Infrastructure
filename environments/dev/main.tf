@@ -4,40 +4,41 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
-  subscription_id = "339e97cf-8522-4368-89b9-ca740955b522"
+  subscription_id = var.subscription_id
 }
 
 module "network" {
   source                     = "../../modules/networking"
-  environment                = "dev"
+  environment                = var.environment
   location                   = var.location
   resource_group_name        = var.resource_group_name
-  public_subnet_address_prefixes = var.public_subnet_address_prefixes
+  public_subnet_address_prefixes  = var.public_subnet_address_prefixes
   private_subnet_address_prefixes = var.private_subnet_address_prefixes
 }
 
 module "nginx_app" {
   source      = "../../modules/nginx"
-  environment = "dev"
+  environment = var.environment
 }
 
 ssl_certificate {
-    name = "pfx-cert"                         
-    data = base64encode(file("${path.module}/certs/site-cert.pfx"))
-    password = var.cert_pfx_password
+  name     = var.ssl_certificate_name
+  data     = base64encode(file("${path.module}/${var.cert_file_path}"))
+  password = var.cert_pfx_password
 }
+
 http_listener {
-    name                           = "https-listener"
-    frontend_ip_configuration_name = "publicIp"
-    frontend_port_name             = "frontendPortHttps"
-    protocol                       = "Https"
-    ssl_certificate_name           = "pfx-cert"
-    host_name                      = "www.example.com"
+  name                            = var.http_listener_name
+  frontend_ip_configuration_name  = "publicIp"
+  frontend_port_name              = "frontendPortHttps"
+  protocol                        = "Https"
+  ssl_certificate_name            = var.ssl_certificate_name
+  host_name                       = var.host_name
 }
 
 module "compute" {
   source              = "../../modules/compute"
-  environment         = "dev"
+  environment         = var.environment
   location            = module.network.location
   resource_group_name = module.network.resource_group_name
   private_subnet_id   = module.network.private_subnet_id
@@ -49,12 +50,10 @@ module "compute" {
 }
 
 module "loadbalancer" {
-  source               = "../../modules/loadbalancer"
-  environment          = "dev"
-  location             = module.network.location
-  resource_group_name  = module.network.resource_group_name
-  public_subnet_id     = module.network.public_subnet_id
+  source              = "../../modules/loadbalancer"
+  environment         = var.environment
+  location            = module.network.location
+  resource_group_name = module.network.resource_group_name
+  public_subnet_id    = module.network.public_subnet_id
   backend_ip_addresses = module.compute.private_ips
-
 }
-
